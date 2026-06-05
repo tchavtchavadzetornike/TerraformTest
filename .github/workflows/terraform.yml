@@ -1,0 +1,96 @@
+name: Terraform
+
+# Manually triggered from the Actions tab. Pick the region (environment) and
+# the Terraform action to run.
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "Environment region to target"
+        type: choice
+        options:
+          - us-east-1
+          - us-west-2
+        default: us-east-1
+      action:
+        description: "Terraform action to run"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+        default: plan
+
+# Required for the OIDC token used to assume the AWS role. No long-lived
+# AWS credentials are stored in GitHub.
+permissions:
+  id-token: write
+  contents: read
+
+# Prevent overlapping runs against the same region's state.
+concurrency:
+  group: terraform-${{ github.event.inputs.region }}
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: "1.9.5"
+
+jobs:
+  terraform:
+    name: "terraform ${{ github.event.inputs.action }} (${{ github.event.inputs.region }})"
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.region }}
+    defaults:
+      run:
+        working-directory: environments/${{ github.event.inputs.region }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ github.event.inputs.region }}
+          role-session-name: gha-terraform-${{ github.run_id }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # Non-blocking: reports formatting issues without failing the run.
+      # Tighten later by removing `continue-on-error` once `terraform fmt` is clean.
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+        working-directory: ${{ github.workspace }}
+        continue-on-error: true
+
+      - name: Terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=ecs-nginx/${{ github.event.inputs.region }}/terraform.tfstate" \
+            -backend-config="region=${{ vars.TF_STATE_REGION }}" \
+            -backend-config="dynamodb_table=${{ vars.TF_STATE_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        if: ${{ github.event.inputs.action == 'plan' }}
+        run: terraform plan -input=false
+
+      - name: Terraform apply
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: terraform apply -input=false -auto-approve
+
+      - name: Terraform destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: terraform destroy -input=false -auto-approve
+
+      - name: Show outputs
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: terraform output

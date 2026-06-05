@@ -1,0 +1,25 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+tfplan
+*.tfplan
+
+# Secrets / local backend config
+trust-policy.json
+*.auto.tfvars
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local prompt scratch file
+claudepromp
