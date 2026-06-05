@@ -126,8 +126,5 @@ resource "aws_ecs_service" "this" {
     container_port   = var.container_port
   }
 
-  # The execution role policy must be attached before the service launches tasks.
-  # (The ALB listener/target-group dependency is enforced at the module call via
-  # `depends_on = [module.alb_appN]` in each environment's main.tf.)
   depends_on = [aws_iam_role_policy_attachment.task_execution]
 }

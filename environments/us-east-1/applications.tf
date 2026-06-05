@@ -1,6 +1,5 @@
 
 
-# One ALB per application.
 module "alb" {
   source   = "../../modules/alb"
   for_each = var.applications
@@ -9,11 +8,10 @@ module "alb" {
   vpc_id            = module.networking.vpc_id
   public_subnet_ids = module.networking.public_subnet_ids
   container_port    = each.value.container_port
+  health_check_path = each.value.health_check_path
 }
 
-# One ECS service per application, each behind its paired ALB.
-# depends_on ensures the ALB (listener + target group) exists before the
-# service tries to register targets, avoiding a race condition.
+
 module "service" {
   source   = "../../modules/ecs_service"
   for_each = var.applications
@@ -30,6 +28,7 @@ module "service" {
   cpu                   = each.value.cpu
   memory                = each.value.memory
   desired_count         = each.value.desired_count
+  log_retention_days    = each.value.log_retention_days
 
   depends_on = [module.alb]
 }

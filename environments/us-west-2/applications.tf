@@ -23,6 +23,7 @@ module "alb" {
   vpc_id            = module.networking.vpc_id
   public_subnet_ids = module.networking.public_subnet_ids
   container_port    = each.value.container_port
+  health_check_path = each.value.health_check_path
 }
 
 # One ECS service per application, each behind its paired ALB.
@@ -44,6 +45,7 @@ module "service" {
   cpu                   = each.value.cpu
   memory                = each.value.memory
   desired_count         = each.value.desired_count
+  log_retention_days    = each.value.log_retention_days
 
   depends_on = [module.alb]
 }

@@ -19,12 +19,14 @@ variable "project_name" {
 variable "applications" {
   description = "Applications to deploy, keyed by a short id (app1, app2, ...)."
   type = map(object({
-    name           = string
-    image          = optional(string, "nginx:latest")
-    container_port = optional(number, 80)
-    cpu            = optional(number, 256)
-    memory         = optional(number, 512)
-    desired_count  = optional(number, 1)
+    name               = string
+    image              = optional(string, "nginx:latest")
+    container_port     = optional(number, 80)
+    cpu                = optional(number, 256)
+    memory             = optional(number, 512)
+    desired_count      = optional(number, 1)
+    health_check_path  = optional(string, "/")
+    log_retention_days = optional(number, 7)
   }))
 
   default = {
