@@ -16,13 +16,6 @@ variable "project_name" {
   default     = "ecs-nginx-demo"
 }
 
-# Map of applications to deploy. Each entry produces its own ALB + ECS service
-# behind a shared VPC and ECS cluster. To add a new app (e.g. app3), just add a
-# new entry here (or in terraform.tfvars) — no other changes are required.
-#
-# The map KEY is used for short resource names (e.g. "app3-alb"); `name` is the
-# ECS service / task / container name. All other fields are optional and fall
-# back to sensible defaults.
 variable "applications" {
   description = "Applications to deploy, keyed by a short id (app1, app2, ...)."
   type = map(object({

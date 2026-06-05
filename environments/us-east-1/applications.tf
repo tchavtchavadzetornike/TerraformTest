@@ -1,18 +1,4 @@
-# ===========================================================================
-# Per-application resources, generated from var.applications.
-#
-# Every entry in the map gets:
-#   - its own internet-facing ALB (module.alb["<key>"])
-#   - its own ECS Fargate service  (module.service["<key>"])
-#
-# Adding a new application is a ONE-LINE change in terraform.tfvars, e.g.:
-#   applications = {
-#     app1 = { name = "nginx-app1" }
-#     app2 = { name = "nginx-app2" }
-#     app3 = { name = "nginx-app3" }   # <-- add this
-#   }
-# No changes to this file (or any module) are needed.
-# ===========================================================================
+
 
 # One ALB per application.
 module "alb" {
